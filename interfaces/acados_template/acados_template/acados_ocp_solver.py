@@ -1904,8 +1904,8 @@ class AcadosOcpSolver:
         dims = np.zeros((2,), dtype=np.intc, order="C")
         dims_data = cast(dims.ctypes.data, POINTER(c_int))
 
-        self.__acados_lib.ocp_nlp_cost_dims_get_from_attr(self.nlp_config, \
-            self.nlp_dims, self.nlp_out, stage_, field, dims_data)
+        # self.__acados_lib.ocp_nlp_cost_dims_get_from_attr(self.nlp_config, \
+        #     self.nlp_dims, self.nlp_out, stage_, field, dims_data)
 
         value_shape = value_.shape
         if len(value_shape) == 1:
@@ -2428,6 +2428,74 @@ class AcadosOcpSolver:
 
         return status
 
+
+    def update_p_global_slice_and_precompute(self, slice_indices: Union[List[int], np.ndarray],
+                                             slice_values: np.ndarray,
+                                             current_full_p_global: Optional[np.ndarray] = None):
+        """
+        Updates a slice of the p_global vector and then calls set_p_global_and_precompute_dependencies.
+
+        Note: p_global is a single vector for the entire problem. This function is a utility
+        to modify a part of it if the user conceptually maps parts of p_global to stages or other entities.
+        The user is responsible for defining the mapping of slices to conceptual stages.
+
+        :param slice_indices: A list or numpy array of integer indices specifying which elements of p_global to update.
+        :param slice_values: A numpy array of values to set at the specified indices. Must be the same length as slice_indices.
+        :param current_full_p_global: Optional. The current full p_global vector.
+                                       If None, the solver will try to use its internally stored p_global values
+                                       (if `store_p_global` was enabled or p_global was set previously via
+                                       `set_p_global_and_precompute_dependencies` or if `ocp.p_global_values` was set).
+                                       If the solver does not have it stored, this argument is required.
+        """
+        if not isinstance(slice_values, np.ndarray) or slice_values.dtype != np.float64:
+            raise TypeError("slice_values must be a numpy array of float64.")
+        if not isinstance(slice_indices, (list, np.ndarray)):
+            raise TypeError("slice_indices must be a list or numpy array of integers.")
+
+        slice_indices_arr = np.asarray(slice_indices, dtype=int)
+
+        if slice_indices_arr.ndim != 1 or slice_values.ndim != 1:
+            raise ValueError("slice_indices and slice_values must be 1D arrays.")
+        if len(slice_indices_arr) != len(slice_values):
+            raise ValueError("slice_indices and slice_values must have the same length.")
+
+        np_global_total = self.__acados_lib.ocp_nlp_dims_get_from_attr(self.nlp_config,
+                                                                   self.nlp_dims, self.nlp_out, 0,
+                                                                   "p_global".encode('utf-8'))
+
+        if np_global_total == 0:
+            if len(slice_indices_arr) > 0 or len(slice_values) > 0:
+                raise ValueError("p_global has size 0 in the solver. Cannot set slices for a non-empty p_global.")
+            # If p_global is empty and slice is empty, call with empty array.
+            return self.set_p_global_and_precompute_dependencies(np.array([], dtype=np.float64))
+
+
+        if np.any(slice_indices_arr < 0) or np.any(slice_indices_arr >= np_global_total):
+            raise ValueError(f"slice_indices contains out-of-bounds indices. Max index is {np_global_total - 1}.")
+
+        _updated_p_global: np.ndarray
+        if current_full_p_global is not None:
+            if not isinstance(current_full_p_global, np.ndarray) or current_full_p_global.dtype != np.float64:
+                raise TypeError("current_full_p_global must be a numpy array of float64.")
+            if current_full_p_global.shape != (np_global_total,):
+                raise ValueError(f"current_full_p_global has incorrect shape. Expected ({np_global_total},), got {current_full_p_global.shape}.")
+            _updated_p_global = current_full_p_global.copy()
+        elif self.__save_p_global and self.__p_global_values is not None:
+            if self.__p_global_values.shape != (np_global_total,):
+                raise RuntimeError(f"Internal p_global_values has shape {self.__p_global_values.shape} but expected ({np_global_total},). "
+                                   "This might indicate an inconsistency. Provide current_full_p_global argument or ensure p_global was set correctly before.")
+            _updated_p_global = self.__p_global_values.copy()
+        else:
+            # Attempt to create a zero vector if no current p_global is available.
+            # This might be risky if the user expects non-zero defaults not set yet.
+            # A better approach might be to require current_full_p_global if not stored.
+            print("Warning: current_full_p_global not provided and not stored in solver. Assuming zeros for unspecified parts of p_global.")
+            _updated_p_global = np.zeros(np_global_total, dtype=np.float64)
+
+
+        _updated_p_global[slice_indices_arr] = slice_values
+
+        return self.set_p_global_and_precompute_dependencies(_updated_p_global)
 
     def __del__(self):
         if self.solver_created:

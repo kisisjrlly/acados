@@ -610,7 +610,7 @@ static void ocp_nlp_sqp_rti_feedback_step(ocp_nlp_config *config, ocp_nlp_dims *
     if ((qp_status!=ACADOS_SUCCESS) & (qp_status!=ACADOS_MAXITER))
     {
 #ifndef ACADOS_SILENT
-        printf("\nSQP_RTI: QP solver returned error status %d QP iteration %d.\n",
+        printf("\nSQP-RTI feedback step: QP solver returned error status %d QP iteration %d.\n",
                 qp_status, qp_iter);
 #endif
         if (nlp_opts->print_level > 0)
@@ -918,7 +918,7 @@ static void ocp_nlp_sqp_rti_preparation_advanced_step(ocp_nlp_config *config, oc
             if ((qp_status!=ACADOS_SUCCESS) & (qp_status!=ACADOS_MAXITER))
             {
 #ifndef ACADOS_SILENT
-                printf("\nSQP_RTI: QP solver returned error status %d QP iteration %d.\n",
+                printf("\nAS-RTI Level B preparation: QP solver returned error status %d QP iteration %d.\n",
                     qp_status, qp_iter);
 #endif
                 nlp_mem->status = ACADOS_QP_FAILURE;
@@ -982,7 +982,7 @@ static void ocp_nlp_sqp_rti_preparation_advanced_step(ocp_nlp_config *config, oc
             if ((qp_status!=ACADOS_SUCCESS) & (qp_status!=ACADOS_MAXITER))
             {
 #ifndef ACADOS_SILENT
-                printf("\nSQP_RTI: QP solver returned error status %d QP iteration %d.\n",
+                printf("\nAS-RTI Level C preparation: QP solver returned error status %d QP iteration %d.\n",
                     qp_status, qp_iter);
 #endif
                 nlp_mem->status = ACADOS_QP_FAILURE;
@@ -1055,7 +1055,7 @@ static void ocp_nlp_sqp_rti_preparation_advanced_step(ocp_nlp_config *config, oc
             if ((qp_status!=ACADOS_SUCCESS) & (qp_status!=ACADOS_MAXITER))
             {
 #ifndef ACADOS_SILENT
-                printf("\nSQP_RTI: QP solver returned error status %d QP iteration %d.\n",
+                printf("\nAS-RTI Level D preparation: QP solver returned error status %d QP iteration %d.\n",
                     qp_status, qp_iter);
 #endif
                 mem->nlp_mem->status = ACADOS_QP_FAILURE;

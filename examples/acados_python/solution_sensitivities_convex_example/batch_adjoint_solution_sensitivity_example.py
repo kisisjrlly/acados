@@ -67,6 +67,7 @@ def main_sequential(x0, N_sim):
 
         solver.setup_qp_matrices_and_factorize()
         sens_adj = solver.eval_adjoint_solution_sensitivity([(1, np.ones((ocp.dims.nx, 1)))], [(1, np.ones((ocp.dims.nu, 1)))])
+        print("sens_adj shape in sequential:", sens_adj.shape)
         adjoints.append(sens_adj)
         param_vals.append(param)
 
@@ -116,6 +117,7 @@ def main_batch(Xinit, simU, param_vals, adjoints_ref, tol, num_threads_in_batch_
     # eval adjoint
     t0 = time.time()
     sens_adj = batch_solver.eval_adjoint_solution_sensitivity([(1, np.ones((N_batch, ocp.dims.nx, 1)))], [(1, np.ones((N_batch, ocp.dims.nu, 1)))])
+    print("sens_adj shape in batch:", sens_adj.shape)
     t_elapsed = 1e3 * (time.time() - t0)
 
     print(f"main_batch: with {num_threads_in_batch_solve} threads, adjoint solution sens: {t_elapsed:.3f} ms\n")

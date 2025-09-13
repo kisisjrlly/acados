@@ -1127,8 +1127,8 @@ class AcadosOcp:
             suffix = f", got cost_type_e {cost.cost_type_e}."
 
         if opts.with_solution_sens_wrt_params:
-            if dims.np_global == 0:
-                raise ValueError('with_solution_sens_wrt_params is only compatible if global parameters `p_global` are provided. Sensitivities wrt parameters have been refactored to use p_global instead of p in https://github.com/acados/acados/pull/1316. Got emty p_global.')
+            # if dims.np_global == 0:
+            #     raise ValueError('with_solution_sens_wrt_params is only compatible if global parameters `p_global` are provided. Sensitivities wrt parameters have been refactored to use p_global instead of p in https://github.com/acados/acados/pull/1316. Got emty p_global.')
             if any([cost_type not in ["EXTERNAL", "LINEAR_LS"] for cost_type in cost_types_to_check]):
                 raise ValueError('with_solution_sens_wrt_params is only compatible with EXTERNAL and LINEAR_LS cost_type' + suffix)
             if opts.N_horizon > 0 and opts.integrator_type != "DISCRETE":

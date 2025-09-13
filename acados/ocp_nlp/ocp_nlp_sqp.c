@@ -723,7 +723,7 @@ int ocp_nlp_sqp(void *config_, void *dims_, void *nlp_in_, void *nlp_out_,
             nlp_mem->iter++;
 
 #ifndef ACADOS_SILENT
-            printf("\nQP solver returned error status %d in SQP iteration %d, QP iteration %d.\n",
+            printf("\nOCP nlp sqp error:QP solver returned error status %d in SQP iteration %d, QP iteration %d.\n",
                    qp_status, nlp_mem->iter, qp_iter);
 #endif
 #if defined(ACADOS_WITH_OPENMP)
